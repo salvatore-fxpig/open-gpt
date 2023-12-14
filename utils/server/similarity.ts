@@ -1,22 +1,22 @@
-import { OpenAIApi } from 'openai';
+import OpenAI from 'openai';
 import { saveLlmUsage } from './llmUsage';
 import { OpenAIModelID, OpenAIModels } from '@/types/openai';
 export const createEmbedding = async (
   text: string,
-  openai: OpenAIApi,
+  openai: OpenAI,
   userId: string,
 ): Promise<number[]> => {
   const modelId = OpenAIModels[OpenAIModelID.TEXT_EMBEDDING_ADA_002].id;
-  const result = await openai.createEmbedding({
+  const result = await openai.embeddings.create({
     model: modelId,
     input: text,
   });
   await saveLlmUsage(userId, modelId, "embedding", {
-    prompt: result.data.usage?.prompt_tokens,
+    prompt: result.usage?.prompt_tokens,
     completion: 0,
-    total: result.data.usage?.total_tokens
+    total: result.usage?.total_tokens
   })
-  return result.data.data[0].embedding;
+  return result.data[0].embedding;
 };
 
 export function calcCosineSimilarity(a: number[], b: number[]) {

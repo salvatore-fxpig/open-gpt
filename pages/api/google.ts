@@ -152,7 +152,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<any>) => {
     const openai = getOpenAIApi(model.azureDeploymentId);
     let answerRes;
     try {
-      answerRes = await openai.createChatCompletion({
+      answerRes = await openai.chat.completions.create({
         model: model.id,
         messages: [
           {
@@ -172,7 +172,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse<any>) => {
       } else throw error
     }
 
-    const { choices: choices2, usage } = await answerRes.data;
+    const { choices: choices2, usage } = await answerRes;
     const answer = choices2[0].message!.content;
 
     await saveLlmUsage(userId, model.id, "google", {
