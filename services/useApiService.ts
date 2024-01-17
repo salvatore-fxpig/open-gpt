@@ -21,7 +21,9 @@ const useApiService = () => {
       params: { body: ChatBody; conversation: Conversation },
       signal?: AbortSignal,
     ) => {
-      return fetchService.post<Message>(`/api/chat`, {
+      // set NEXT_PUBLIC_CHAT_API_PATH to /.netlify/functions/chat`
+      const chatApiPath = process.env.NEXT_PUBLIC_CHAT_API_PATH ?? `/api/chat`;
+      return fetchService.post<Message>(chatApiPath, {
         body: params.body,
         headers: {
           'Content-Type': 'application/json',

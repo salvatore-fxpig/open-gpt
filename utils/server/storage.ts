@@ -10,7 +10,19 @@ import { User, UserRole } from '@/types/user';
 import { UserLlmUsage, NewUserLlmUsage, LlmPriceRate } from '@/types/llmUsage';
 import { OpenAIModelID } from '@/types/openai';
 
+let _client: MongoClient | null = null
 let _db: Db | null = null;
+
+// Required to close the tasks in streaming mode on Netlify, 
+// if DB connection stays open task won't close and will instead timeout
+export async function closeClient() {
+  if (_client) {
+    await _client.close();
+    _client = null;
+  }
+  _db = null
+}
+
 export async function getDb(): Promise<Db> {
   if (!process.env.MONGODB_URI) {
     throw new Error('MONGODB_URI is not set');
@@ -18,10 +30,13 @@ export async function getDb(): Promise<Db> {
   if (_db !== null) {
     return _db;
   }
-  const client = new MongoClient(process.env.MONGODB_URI, { monitorCommands: true });
-  client.on('commandFailed', (event) => console.error(JSON.stringify(event)));
-  await client.connect();
-  let db = client.db(MONGODB_DB);
+  if (_client === null) {
+    const client = new MongoClient(process.env.MONGODB_URI, { monitorCommands: true });
+    client.on('commandFailed', (event) => console.error(JSON.stringify(event)));
+    _client = client;
+  }
+  await _client.connect();
+  let db = _client.db(MONGODB_DB);
   _db = db;
   return db;
 }
@@ -283,7 +298,7 @@ export class PublicPromptsDb {
       'prompt.id': id,
     });
   }
- 
+
 }
 
 export class UserInfoDb {
@@ -324,7 +339,6 @@ export class UserInfoDb {
   async removeUser(id: string) {
     return await this._users.deleteOne({ _id: id });
   }
-
 }
 
 export class LlmsDb {
